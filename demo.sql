@@ -1,4 +1,21 @@
 -- SQLite
+DROP TABLE IF EXISTS kk_demographics;
+
+CREATE TABLE kk_demographics (
+  Respondent_No TEXT,
+  Civil_Status TEXT,
+  Youth_Classification TEXT,
+  Youth_Age_Group TEXT,
+  Work_Status TEXT,
+  Educational_Background TEXT,
+  Registered_SK_Voter TEXT,
+  Registered_National_Voter TEXT,
+  Attended_KK_Assembly TEXT,
+  Did_you_vote_last_SK_election TEXT,
+  If_yeshow_many_times TEXT,
+  If_No_Why TEXT,
+  respondent_id INTEGER
+);
 
 INSERT INTO `kk_demographics` (`Respondent_No`, `Civil_Status`, `Youth_Classification`, `Youth_Age_Group`, `Work_Status`, `Educational_Background`, `Registered_SK_Voter`, `Registered_National_Voter`, `Attended_KK_Assembly`, `Did_you_vote_last_SK_election`, `If_yeshow_many_times`, `If_No_Why`, `respondent_id`) VALUES
 ('1000', 'Single', 'In School Youth', 'Child Youth (15-17 yrs. old)', 'Unemployed', 'High school undergraduate', 'Yes', 'Yes', 'Yes', 'Yes', '1-2 times', NULL, 1),

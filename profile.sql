@@ -1,4 +1,27 @@
 -- SQLite
+DROP TABLE IF EXISTS kk_profile;
+
+
+CREATE TABLE kk_profile (
+  respondent_id INTEGER NOT NULL,
+  Respondent_No TEXT NOT NULL,
+  Date TEXT,
+  Last_Name TEXT,
+  Middle_Name TEXT,
+  First_Name TEXT,
+  Suffix TEXT,
+  Region TEXT,
+  Province TEXT,
+  Municipality TEXT,
+  Barangay TEXT,
+  Sex_Assigned_by_Birth TEXT,
+  Age TEXT,
+  Birthday TEXT,
+  Email_Address TEXT,
+  Contact_No TEXT,
+  PRIMARY KEY (respondent_id)
+);
+
 INSERT INTO `kk_profile` (`respondent_id`, `Respondent_No`, `Date`, `Last_Name`, `Middle_Name`, `First_Name`, `Suffix`, `Region`, `Province`, `Municipality`, `Barangay`, `Sex_Assigned_by_Birth`, `Age`, `Birthday`, `Email_Address`, `Contact_No`) VALUES
 (1, '1000', '24/03/2025', 'Reyes', 'Domingo', 'Nicole', NULL, 'CALABARZON', 'Batangas', 'San Jose', 'Aguila', 'Female', '22', '14/01/2003', 'nicole.reyes33@mail.com', '9594085757'),
 (2, '1001', '12/03/2025', 'Rodriguez', 'Vargas', 'Patricia', 'Sr.', 'CALABARZON', 'Batangas', 'San Jose', 'Aguila', 'Female', '18', '19/11/2006', 'patricia.rodriguez13@youth.org', '9112658551'),
