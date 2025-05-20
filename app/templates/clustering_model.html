@@ -15,6 +15,16 @@
         <div class="card shadow-sm border-0 rounded-4">
           <div class="card-body p-4">
             <h5 class="card-title mb-4 text-secondary">Cluster Visualization</h5>
+            {% if silhouette_event is not none %}
+              <div class="mb-3">
+                <span class="badge bg-info text-dark fs-6">
+                  Silhouette Score: {{ '%.3f'|format(silhouette_event) }}
+                </span>
+                <span class="text-muted ms-2" style="font-size:0.95em;">
+                  (Closer to 1 means better-defined clusters)
+                </span>
+              </div>
+            {% endif %}
             <div class="chart-container position-relative" style="height: 350px; width: 100%;">
               <canvas id="eventClusterChart"></canvas>
             </div>
@@ -71,6 +81,16 @@
         <div class="card shadow-sm border-0 rounded-4">
           <div class="card-body p-4">
             <h5 class="card-title mb-4 text-secondary">Needs Support Visualization</h5>
+            {% if silhouette_support is not none %}
+              <div class="mb-3">
+                <span class="badge bg-info text-dark fs-6">
+                  Silhouette Score: {{ '%.3f'|format(silhouette_support) }}
+                </span>
+                <span class="text-muted ms-2" style="font-size:0.95em;">
+                  (Closer to 1 means better-defined clusters)
+                </span>
+              </div>
+            {% endif %}
             <div class="chart-container position-relative" style="height: 450px;">
               <canvas id="engagementClusterChart" aria-label="Needs Support Clusters scatter chart" role="img"></canvas>
             </div>
