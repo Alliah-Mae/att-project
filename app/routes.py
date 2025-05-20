@@ -9,6 +9,9 @@ from sqlalchemy import distinct, func, case
 from sqlalchemy import text
 from collections import defaultdict
 import json
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import LabelEncoder
 
 main = Blueprint('main', __name__)
 
@@ -25,7 +28,9 @@ def index():
             (KKProfile.Barangay.ilike(search_filter))
         )
     profiles = query.all()
-    return render_template('index.html', profiles=profiles, search=search)
+    # Get unique barangays for the filter
+    barangays = [row[0] for row in db.session.query(distinct(KKProfile.Barangay)).order_by(KKProfile.Barangay).all() if row[0]]
+    return render_template('index.html', profiles=profiles, search=search, barangays=barangays)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -271,6 +276,166 @@ def dashboard():
         active_programs=active_programs,
         avg_engagement=avg_engagement,
         total_barangays=total_barangays
+    )
+
+@main.route('/clustering_model')
+@login_required
+def clustering_model():
+    # 1. Fetch data from the database
+    profiles = db.session.query(
+        KKProfile.Respondent_No,
+        KKProfile.Age,
+        KKDemographics.Educational_Background,
+        KKDemographics.Work_Status,
+        KKDemographics.Attended_KK_Assembly,
+        KKDemographics.Did_you_vote_last_SK_election,
+        KKProfile.Sex_Assigned_by_Birth,
+        KKProfile.Barangay
+    ).join(KKDemographics, KKProfile.Respondent_No == KKDemographics.Respondent_No).all()
+
+    # 2. Preprocess data for clustering
+    data = []
+    for p in profiles:
+        try:
+            age = int(p.Age) if p.Age is not None and str(p.Age).isdigit() else 0
+        except Exception:
+            age = 0
+        education = p.Educational_Background or 'Unknown'
+        work_status = p.Work_Status or 'Unknown'
+        attended = 1 if p.Attended_KK_Assembly == 'Yes' else 0
+        voted = 1 if p.Did_you_vote_last_SK_election == 'Yes' else 0
+        sex = p.Sex_Assigned_by_Birth or 'Unknown'
+        barangay = p.Barangay or 'Unknown'
+        data.append([age, education, work_status, attended, voted, sex, barangay])
+
+    # Encode categorical features
+    education_le = LabelEncoder()
+    work_le = LabelEncoder()
+    educations = [row[1] for row in data]
+    works = [row[2] for row in data]
+    education_encoded = education_le.fit_transform(educations)
+    work_encoded = work_le.fit_transform(works)
+
+    X = np.array([
+        [row[0], education_encoded[i], work_encoded[i], row[3], row[4]]
+        for i, row in enumerate(data)
+    ])
+
+    # 3. Run KMeans clustering for event recommendation
+    kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
+    labels = kmeans.labels_
+
+    # 4. Prepare cluster summaries and chart data for the template
+    event_clusters = []
+    for i in range(3):
+        indices = np.where(labels == i)[0]
+        cluster_profiles = [profiles[j] for j in indices]
+        count = len(cluster_profiles)
+        # Calculate average age
+        ages = [int(p.Age) for p in cluster_profiles if p.Age is not None and str(p.Age).isdigit()]
+        avg_age = np.mean(ages) if ages else 0
+        # Top demographic (most common sex + age group)
+        from collections import Counter
+        sex_counter = Counter([p.Sex_Assigned_by_Birth for p in cluster_profiles if p.Sex_Assigned_by_Birth])
+        top_sex = sex_counter.most_common(1)[0][0] if sex_counter else '-'
+        age_groups = [(int(p.Age) // 5 * 5) if p.Age and str(p.Age).isdigit() else None for p in cluster_profiles]
+        age_group_counter = Counter([ag for ag in age_groups if ag is not None])
+        top_age_group = age_group_counter.most_common(1)[0][0] if age_group_counter else '-'
+        top_demo = f"{top_age_group}-{top_age_group+4}, {top_sex}" if top_age_group != '-' else '-'
+        # Top engagement (most common attended/voted)
+        engagement_counter = Counter([(p.Attended_KK_Assembly, p.Did_you_vote_last_SK_election) for p in cluster_profiles])
+        top_engagement = engagement_counter.most_common(1)[0][0] if engagement_counter else ('-', '-')
+        top_engagement_str = f"Attended: {top_engagement[0]}, Voted: {top_engagement[1]}"
+        # Recommended event (dummy logic: based on top education)
+        education_counter = Counter([p.Educational_Background for p in cluster_profiles if p.Educational_Background])
+        top_education = education_counter.most_common(1)[0][0] if education_counter else '-'
+        if top_education == 'College':
+            recommended_event = 'Job Fair'
+        elif top_education == 'High School':
+            recommended_event = 'Leadership Camp'
+        else:
+            recommended_event = 'Sports Fest'
+        event_clusters.append({
+            "label": f"Cluster {i+1}",
+            "count": int(count),
+            "top_demo": top_demo,
+            "top_engagement": top_engagement_str,
+            "recommended_event": recommended_event
+        })
+
+    event_cluster_chart_data = {
+        "datasets": [
+            {
+                "label": f"Cluster {i+1}",
+                "data": [{"x": float(X[j][0]), "y": float(X[j][1])} for j in np.where(labels == i)[0]],
+                "backgroundColor": color
+            }
+            for i, color in enumerate(["rgba(54, 162, 235, 0.7)", "rgba(255, 99, 132, 0.7)", "rgba(255, 206, 86, 0.7)"])
+        ]
+    }
+
+    # --- Youth Needs Support ---
+    # Let's cluster by participation (attended+voted), education, and employment
+    participation = [row[3] + row[4] for row in data]  # attended + voted
+    education_encoded2 = education_le.transform([row[1] for row in data])
+    work_encoded2 = work_le.transform([row[2] for row in data])
+    X2 = np.array([
+        [participation[i], education_encoded2[i], work_encoded2[i]]
+        for i in range(len(data))
+    ])
+    kmeans2 = KMeans(n_clusters=3, random_state=1).fit(X2)
+    labels2 = kmeans2.labels_
+    support_labels = ['High Need Group', 'Medium Need Group', 'Low Need Group']
+    needs_support_groups = []
+    for i in range(3):
+        indices = np.where(labels2 == i)[0]
+        cluster_profiles = [profiles[j] for j in indices]
+        count = len(cluster_profiles)
+        avg_participation = np.mean([participation[j] for j in indices]) if count else 0
+        education_counter = Counter([p.Educational_Background for p in cluster_profiles if p.Educational_Background])
+        common_education = education_counter.most_common(1)[0][0] if education_counter else '-'
+        work_counter = Counter([p.Work_Status for p in cluster_profiles if p.Work_Status])
+        common_employment = work_counter.most_common(1)[0][0] if work_counter else '-'
+        # Add a simple support need level based on participation (lower participation = higher need)
+        if avg_participation < 1.5:
+            support_level = 'High Need'
+        elif avg_participation < 2.5:
+            support_level = 'Medium Need'
+        else:
+            support_level = 'Low Need'
+        needs_support_groups.append({
+            "label": support_labels[i],
+            "count": int(count),
+            "avg_participation": float(round(avg_participation, 2)),
+            "common_education": common_education,
+            "common_employment": common_employment
+        })
+    bar_labels = [group["label"] for group in needs_support_groups]
+    bar_data = [group["count"] for group in needs_support_groups]
+    needs_support_chart_data = {
+        "datasets": [
+            {
+                "label": support_labels[i],
+                "data": [
+                    {"x": float(X2[j][0]), "y": float(X2[j][1])}
+                    for j in np.where(labels2 == i)[0]
+                ],
+                "backgroundColor": color
+            }
+            for i, color in enumerate([
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(255, 206, 86, 0.7)",
+                "rgba(75, 192, 192, 0.7)"
+            ])
+        ]
+    }
+
+    return render_template(
+        'clustering_model.html',
+        event_clusters=event_clusters,
+        event_cluster_chart_data=event_cluster_chart_data,
+        needs_support_groups=needs_support_groups,
+        needs_support_chart_data=needs_support_chart_data
     )
 
 

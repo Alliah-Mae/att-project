@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="mb-5 text-center fw-bold text-primary">Youth Clustering & Segmentation</h1>
+
+  <!-- Recommend Event Clustering -->
+  <section class="mb-5">
+    <h3 class="fw-semibold mb-3">Recommend Event Clustering</h3>
+    <p class="mb-4 text-muted fst-italic">
+      Clustering youths based on demographics and engagement to recommend the most suitable events.
+    </p>
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-10">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4 text-secondary">Cluster Visualization</h5>
+            <div class="chart-container position-relative" style="height: 350px; width: 100%;">
+              <canvas id="eventClusterChart"></canvas>
+            </div>
+            <div class="chart-legend text-center mt-3">
+              <small class="text-muted">Hover over data points to see detailed information</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-secondary">Cluster Summary</h5>
+            <div class="table-responsive rounded">
+              <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-primary text-center">
+                  <tr>
+                    <th scope="col">Cluster</th>
+                    <th scope="col">Number of Youth</th>
+                    <th scope="col">Top Demographic</th>
+                    <th scope="col">Top Engagement</th>
+                    <th scope="col">Recommended Event</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cluster in event_clusters %}
+                  <tr>
+                    <td class="text-center">{{ cluster.label }}</td>
+                    <td class="text-center">{{ cluster.count }}</td>
+                    <td>{{ cluster.top_demo }}</td>
+                    <td>{{ cluster.top_engagement }}</td>
+                    <td>{{ cluster.recommended_event }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Youth Needs Support -->
+  <section>
+    <h3 class="fw-semibold mb-3">Youth Needs Support</h3>
+    <p class="mb-4 text-muted fst-italic">
+      Identify at-risk or underserved youth needing programs or assistance.
+    </p>
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-10">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4 text-secondary">Needs Support Visualization</h5>
+            <div class="chart-container position-relative" style="height: 450px;">
+              <canvas id="engagementClusterChart" aria-label="Needs Support Clusters scatter chart" role="img"></canvas>
+            </div>
+            <div class="chart-legend text-center mt-3">
+              <small class="text-muted">Hover over data points to see detailed information</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-secondary">Needs Support Summary</h5>
+            <div class="table-responsive rounded">
+              <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-primary text-center">
+                  <tr>
+                    <th scope="col">Group</th>
+                    <th scope="col">Number of Youth</th>
+                    <th scope="col">Avg. Participation</th>
+                    <th scope="col">Common Education</th>
+                    <th scope="col">Common Employment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for segment in needs_support_groups %}
+                  <tr>
+                    <td class="text-center">{{ segment.label }}</td>
+                    <td class="text-center">{{ segment.count }}</td>
+                    <td class="text-center">{{ segment.avg_participation }}</td>
+                    <td>{{ segment.common_education }}</td>
+                    <td>{{ segment.common_employment }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Chart.js and plugins -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script id="event-cluster-data" type="application/json">
+  {{ event_cluster_chart_data|tojson }}
+</script>
+<script id="needs-support-data" type="application/json">
+  {{ needs_support_chart_data|tojson }}
+</script>
+
+<script>
+  // Register Chart.js plugins
+  Chart.register(ChartDataLabels);
+  
+  const eventClusterChartData = JSON.parse(document.getElementById('event-cluster-data').textContent);
+  const needsSupportChartData = JSON.parse(document.getElementById('needs-support-data').textContent);
+
+  // Custom color palette
+  const colorPalette = [
+    'rgba(66, 133, 244, 0.8)',   // Google Blue
+    'rgba(219, 68, 55, 0.8)',    // Google Red
+    'rgba(244, 180, 0, 0.8)',    // Google Yellow
+    'rgba(15, 157, 88, 0.8)',    // Google Green
+    'rgba(171, 71, 188, 0.8)',   // Purple
+    'rgba(255, 112, 67, 0.8)',   // Deep Orange
+    'rgba(0, 172, 193, 0.8)',    // Cyan
+    'rgba(124, 179, 66, 0.8)'    // Light Green
+  ];
+  
+  // Add colors to datasets if not already present
+  function addColorsToDatasets(data) {
+    data.datasets.forEach((dataset, index) => {
+      const colorIndex = index % colorPalette.length;
+      dataset.backgroundColor = dataset.backgroundColor || colorPalette[colorIndex];
+      dataset.borderColor = dataset.borderColor || colorPalette[colorIndex].replace('0.8', '1');
+      
+      // Set point properties
+      dataset.pointRadius = 8;
+      dataset.pointHoverRadius = 12;
+      dataset.pointBorderWidth = 2;
+      dataset.pointHoverBorderWidth = 3;
+      dataset.pointBorderColor = 'white';
+    });
+    return data;
+  }
+
+  // Apply colors
+  const coloredEventClusterData = addColorsToDatasets(eventClusterChartData);
+  const coloredNeedsSupportData = addColorsToDatasets(needsSupportChartData);
+
+  // Chart common configuration
+  const chartCommonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 1200,
+      easing: 'easeOutQuint',
+      delay: (context) => context.dataIndex * 150
+    },
+    interaction: {
+      mode: 'nearest',
+      intersect: false,
+      axis: 'xy'
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        align: 'center',
+        labels: { 
+          boxWidth: 16, 
+          padding: 20, 
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: { 
+            size: 13,
+            family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            weight: '500'
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleFont: { 
+          size: 14,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 13
+        },
+        padding: 12,
+        cornerRadius: 6,
+        displayColors: true,
+        usePointStyle: true,
+        callbacks: {
+          label: ctx => {
+            const label = ctx.dataset.label || '';
+            return [
+              `${label}`,
+              `X: ${ctx.parsed.x.toFixed(2)}`,
+              `Y: ${ctx.parsed.y.toFixed(2)}`
+            ];
+          }
+        }
+      },
+      datalabels: {
+        display: false, // Only show for certain points
+        color: '#fff',
+        font: {
+          weight: 'bold',
+          size: 11
+        },
+        backgroundColor: function(context) {
+          return context.dataset.backgroundColor;
+        },
+        borderRadius: 3,
+        padding: 4
+      }
+    },
+    scales: {
+      x: {
+        title: { 
+          display: true, 
+          text: 'Feature X',
+          font: { 
+            size: 14, 
+            weight: 'bold',
+            family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" 
+          },
+          padding: {top: 10, bottom: 0}
+        },
+        grid: { 
+          drawBorder: false, 
+          color: 'rgba(0, 0, 0, 0.05)',
+          lineWidth: 1
+        },
+        ticks: {
+          font: {
+            size: 12
+          },
+          padding: 8
+        }
+      },
+      y: {
+        title: { 
+          display: true, 
+          text: 'Feature Y',
+          font: { 
+            size: 14, 
+            weight: 'bold',
+            family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" 
+          },
+          padding: {top: 0, bottom: 10}
+        },
+        grid: { 
+          drawBorder: false, 
+          color: 'rgba(0, 0, 0, 0.05)',
+          lineWidth: 1
+        },
+        ticks: {
+          font: {
+            size: 12
+          },
+          padding: 8
+        }
+      }
+    }
+  };
+
+  // Event Cluster Chart
+  new Chart(document.getElementById('eventClusterChart'), {
+    type: 'scatter',
+    data: coloredEventClusterData,
+    options: {
+      ...chartCommonOptions,
+      plugins: {
+        ...chartCommonOptions.plugins,
+        title: {
+          display: true,
+          text: 'Event Recommendation Clusters',
+          font: { 
+            size: 18, 
+            weight: '600',
+            family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" 
+          },
+          color: '#333',
+          padding: { top: 10, bottom: 20 }
+        },
+        datalabels: {
+          ...chartCommonOptions.plugins.datalabels,
+          formatter: function(value, context) {
+            // Example: Only show labels for cluster centroids or specific points
+            // This is just an example logic - adjust based on your actual data structure
+            if (value.r && value.r > 5) { // If point has a radius property > 5
+              return context.datasetIndex + '-' + context.dataIndex;
+            }
+            return null; // Don't show label
+          }
+        }
+      },
+      scales: {
+        ...chartCommonOptions.scales,
+        x: {
+          ...chartCommonOptions.scales.x,
+          title: { ...chartCommonOptions.scales.x.title, text: 'Feature X' }
+        },
+        y: {
+          ...chartCommonOptions.scales.y,
+          title: { ...chartCommonOptions.scales.y.title, text: 'Feature Y' }
+        }
+      }
+    }
+  });
+
+  // Needs Support Chart
+  new Chart(document.getElementById('engagementClusterChart'), {
+    type: 'scatter',
+    data: coloredNeedsSupportData,
+    options: {
+      ...chartCommonOptions,
+      plugins: {
+        ...chartCommonOptions.plugins,
+        title: {
+          display: true,
+          text: 'Needs Support Clusters',
+          font: { 
+            size: 18, 
+            weight: '600',
+            family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" 
+          },
+          color: '#333',
+          padding: { top: 10, bottom: 20 }
+        },
+        datalabels: {
+          ...chartCommonOptions.plugins.datalabels,
+          formatter: function(value, context) {
+            // Example condition for when to show labels
+            if (value.r && value.r > 5) {
+              return context.datasetIndex + '-' + context.dataIndex;
+            }
+            return null;
+          }
+        }
+      },
+      scales: {
+        ...chartCommonOptions.scales,
+        x: {
+          ...chartCommonOptions.scales.x,
+          title: { 
+            ...chartCommonOptions.scales.x.title, 
+            text: 'Participation (Attended + Voted)' 
+          },
+          beginAtZero: true,
+        },
+        y: {
+          ...chartCommonOptions.scales.y,
+          title: { 
+            ...chartCommonOptions.scales.y.title, 
+            text: 'Education (Encoded)' 
+          },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

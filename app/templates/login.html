@@ -3,12 +3,106 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <p>{{ form.username.label }}<br>{{ form.username(size=32) }}</p>
-    <p>{{ form.password.label }}<br>{{ form.password(size=32) }}</p>
-    <p>{{ form.submit() }}</p>
-</form>
+<style>
+    body {
+        background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+    }
+    .login-container {
+        max-width: 400px;
+        width: 100%;
+        padding: 2.5rem 2rem 2rem 2rem;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(58,110,165,0.10), 0 1.5px 6px rgba(58,110,165,0.08);
+        margin: 2rem 0;
+        position: relative;
+    }
+    .login-logo {
+        width: 60px;
+        height: 60px;
+        background: #3a6ea5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.2rem auto;
+        color: #fff;
+        font-size: 2rem;
+        box-shadow: 0 2px 8px rgba(58,110,165,0.10);
+    }
+    .login-title {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #3a6ea5;
+        letter-spacing: 1px;
+    }
+    .login-subtitle {
+        text-align: center;
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+    }
+    .form-control:focus {
+        border-color: #3a6ea5;
+        box-shadow: 0 0 0 0.15rem rgba(58,110,165,0.15);
+    }
+    .btn-primary {
+        background: linear-gradient(90deg, #3a6ea5 60%, #5b9bd5 100%);
+        border: none;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(58,110,165,0.10);
+        transition: background 0.2s;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(90deg, #2c5a8a 60%, #3a6ea5 100%);
+    }
+    .forgot-link {
+        display: block;
+        text-align: right;
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        color: #3a6ea5;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .forgot-link:hover {
+        color: #1a4b78;
+        text-decoration: underline;
+    }
+    @media (max-width: 500px) {
+        .login-container {
+            padding: 1.5rem 0.5rem 1rem 0.5rem;
+        }
+    }
+</style>
+<div class="d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="login-container">
+        <div class="login-logo mb-2">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <h2 class="login-title">Welcome Back</h2>
+        <div class="login-subtitle">Sign in to your Youth Governance Dashboard</div>
+        <form method="POST" autocomplete="off">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group mb-3">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control", placeholder="Enter username", size=32, autofocus=True) }}
+            </div>
+
+            <div class="form-group mb-2">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control", placeholder="Enter password", size=32) }}
+            </div>
+
+            <a href="#" class="forgot-link">Forgot password?</a>
+
+            <div class="d-grid mt-4">
+                {{ form.submit(class="btn btn-primary btn-block") }}
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
-<!-- Compare this snippet from app/templates/register.html: -->
