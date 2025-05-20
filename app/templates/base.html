@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Youth Governance Dashboard{% endblock %}</title>
+    <style>
+        .text-danger { color: red; }
+        .text-success { color: green; }
+        .text-default { color: black; }
+    </style>
+</head>
+<body>
+    <nav>
+        {% if current_user.is_authenticated %}
+            Hello, {{ current_user.username }} |
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('main.login') }}">Login</a> |
+            <a href="{{ url_for('main.register') }}">Register</a>
+        {% endif %}
+        | <a href="{{ url_for('main.index') }}">Home</a>
+    </nav>
+    <hr />
+    <div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                <li class="{% if category == 'danger' %}text-danger{% elif category == 'success' %}text-success{% else %}text-default{% endif %}">
+                    {{ message }}
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

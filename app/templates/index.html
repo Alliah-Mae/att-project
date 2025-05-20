@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Youth Profiles{% endblock %}
+
+{% block content %}
+<h1>Youth Profiles</h1>
+
+<form method="get" action="{{ url_for('main.index') }}">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by name or barangay" />
+    <button type="submit">Search</button>
+</form>
+
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Respondent No</th>
+            <th>Name</th>
+            <th>Barangay</th>
+            <th>Age</th>
+            <th>Email</th>
+            <th>Contact No</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in profiles %}
+        <tr>
+            <td>{{ p.Respondent_No }}</td>
+            <td>{{ p.First_Name }} {{ p.Last_Name }}</td>
+            <td>{{ p.Barangay }}</td>
+            <td>{{ p.Age }}</td>
+            <td>{{ p.Email_Address }}</td>
+            <td>{{ p.Contact_No }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">Youth Analytics Dashboard</h1>
+
+    <div class="mb-5">
+        <canvas id="barangayChart" width="400" height="200"></canvas>
+    </div>
+    <div class="mb-5">
+        <canvas id="ageGroupChart" width="400" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Wrap JSON safely so Jinja doesn't break JavaScript parsing
+    const barangayLabels = JSON.parse('{{ barangay_labels | tojson | safe }}');
+    const barangayValues = JSON.parse('{{ barangay_values | tojson | safe }}');
+    const ageGroupLabels = JSON.parse('{{ age_group_labels | tojson | safe }}');
+    const ageGroupValues = JSON.parse('{{ age_group_values | tojson | safe }}');
+
+    // Bar chart: Youth per Barangay
+    const barangayCtx = document.getElementById('barangayChart').getContext('2d');
+    new Chart(barangayCtx, {
+        type: 'bar',
+        data: {
+            labels: barangayLabels,
+            datasets: [{
+                label: 'Youth Count per Barangay',
+                data: barangayValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Youth'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Barangay'
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie chart: Youth by Age Group
+    const ageGroupCtx = document.getElementById('ageGroupChart').getContext('2d');
+    new Chart(ageGroupCtx, {
+        type: 'pie',
+        data: {
+            labels: ageGroupLabels,
+            datasets: [{
+                label: 'Youth Count by Age Group',
+                data: ageGroupValues,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+{% endblock %}
