@@ -125,7 +125,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Data from Flask backend
-    const dashboardData = {{ dashboard_data|tojson|safe }};
+    const dashboardData = JSON.parse('{{ dashboard_data|tojson|safe }}');
+    console.log('dashboardData:', dashboardData);
 
     // Initialize charts
     function initializeCharts() {

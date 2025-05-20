@@ -235,16 +235,20 @@ def dashboard():
         '25-30': 0
     }
     
-    for profile in KKProfile.query.all():
-        age = profile.Age
-        if 15 <= age <= 17:
-            age_groups['15-17'] += 1
-        elif 18 <= age <= 21:
-            age_groups['18-21'] += 1
-        elif 22 <= age <= 24:
-            age_groups['22-24'] += 1
-        elif 25 <= age <= 30:
-            age_groups['25-30'] += 1
+    # Get age distribution using SQL aggregation
+    age_distribution = db.session.query(
+        case(
+            (db.and_(KKProfile.Age >= 15, KKProfile.Age <= 17), '15-17'),
+            (db.and_(KKProfile.Age >= 18, KKProfile.Age <= 21), '18-21'),
+            (db.and_(KKProfile.Age >= 22, KKProfile.Age <= 24), '22-24'),
+            (db.and_(KKProfile.Age >= 25, KKProfile.Age <= 30), '25-30')
+        ).label('age_group'),
+        func.count(KKProfile.Respondent_No)
+    ).group_by('age_group').all()
+    
+    for age_group, count in age_distribution:
+        if age_group:  # Skip None values
+            age_groups[age_group] = count
     
     dashboard_data['ageGroupData']['labels'] = list(age_groups.keys())
     dashboard_data['ageGroupData']['datasets'][0]['data'] = list(age_groups.values())
@@ -255,9 +259,16 @@ def dashboard():
         func.count(KKProfile.Respondent_No)
     ).group_by(KKProfile.Sex_Assigned_by_Birth).all()
     
+    gender_data = []
     for gender, count in gender_counts:
-        if gender:
-            dashboard_data['genderData']['datasets'][0]['data'].append(count)
+        if gender:  # Skip None values
+            gender_data.append(count)
+    
+    # Ensure we have data for both genders
+    if len(gender_data) < 2:
+        gender_data.extend([0] * (2 - len(gender_data)))
+    
+    dashboard_data['genderData']['datasets'][0]['data'] = gender_data
     
     # Get education distribution
     education_counts = db.session.query(
@@ -265,10 +276,15 @@ def dashboard():
         func.count(KKDemographics.Respondent_No)
     ).group_by(KKDemographics.Educational_Background).all()
     
+    education_labels = []
+    education_data = []
     for education, count in education_counts:
-        if education:
-            dashboard_data['educationData']['labels'].append(education)
-            dashboard_data['educationData']['datasets'][0]['data'].append(count)
+        if education:  # Skip None values
+            education_labels.append(education)
+            education_data.append(count)
+    
+    dashboard_data['educationData']['labels'] = education_labels
+    dashboard_data['educationData']['datasets'][0]['data'] = education_data
     
     # Get employment status
     employment_counts = db.session.query(
@@ -276,47 +292,70 @@ def dashboard():
         func.count(KKDemographics.Respondent_No)
     ).group_by(KKDemographics.Work_Status).all()
     
+    employment_labels = []
+    employment_data = []
     for status, count in employment_counts:
-        if status:
-            dashboard_data['employmentData']['labels'].append(status)
-            dashboard_data['employmentData']['datasets'][0]['data'].append(count)
+        if status:  # Skip None values
+            employment_labels.append(status)
+            employment_data.append(count)
     
-    # Calculate engagement levels
-    engagement_levels = {
-        'Highly Active': 0,
-        'Active': 0,
-        'Inactive': 0
-    }
+    dashboard_data['employmentData']['labels'] = employment_labels
+    dashboard_data['employmentData']['datasets'][0]['data'] = employment_data
     
-    for profile in KKProfile.query.join(KKDemographics).all():
-        if profile.demographics:
-            if profile.demographics.Attended_KK_Assembly == 'Yes' and profile.demographics.Did_you_vote_last_SK_election == 'Yes':
-                engagement_levels['Highly Active'] += 1
-            elif profile.demographics.Attended_KK_Assembly == 'Yes' or profile.demographics.Did_you_vote_last_SK_election == 'Yes':
-                engagement_levels['Active'] += 1
-            else:
-                engagement_levels['Inactive'] += 1
+    # Calculate engagement levels using SQL
+    engagement_levels = db.session.query(
+        case(
+            (db.and_(
+                KKDemographics.Attended_KK_Assembly == 'Yes',
+                KKDemographics.Did_you_vote_last_SK_election == 'Yes'
+            ), 'Highly Active'),
+            (db.or_(
+                KKDemographics.Attended_KK_Assembly == 'Yes',
+                KKDemographics.Did_you_vote_last_SK_election == 'Yes'
+            ), 'Active'),
+            else_='Inactive'
+        ).label('engagement_level'),
+        func.count(KKProfile.Respondent_No)
+    ).join(KKDemographics).group_by('engagement_level').all()
     
-    dashboard_data['engagementData']['datasets'][0]['data'] = list(engagement_levels.values())
+    engagement_data = [0, 0, 0]  # [Highly Active, Active, Inactive]
+    for level, count in engagement_levels:
+        if level == 'Highly Active':
+            engagement_data[0] = count
+        elif level == 'Active':
+            engagement_data[1] = count
+        else:
+            engagement_data[2] = count
     
-    # Calculate support needs (example calculation based on employment and education)
-    support_needs = {
-        'High': 0,
-        'Medium': 0,
-        'Low': 0
-    }
+    dashboard_data['engagementData']['datasets'][0]['data'] = engagement_data
     
-    for profile in KKProfile.query.join(KKDemographics).all():
-        if profile.demographics:
-            if profile.demographics.Work_Status == 'Unemployed' and profile.demographics.Educational_Background in ['Elementary', 'High School']:
-                support_needs['High'] += 1
-            elif profile.demographics.Work_Status == 'Part-time' or profile.demographics.Educational_Background == 'College':
-                support_needs['Medium'] += 1
-            else:
-                support_needs['Low'] += 1
+    # Calculate support needs using SQL
+    support_needs = db.session.query(
+        case(
+            (db.and_(
+                KKDemographics.Work_Status == 'Unemployed',
+                KKDemographics.Educational_Background.in_(['Elementary', 'High School'])
+            ), 'High'),
+            (db.or_(
+                KKDemographics.Work_Status == 'Part-time',
+                KKDemographics.Educational_Background == 'College'
+            ), 'Medium'),
+            else_='Low'
+        ).label('support_level'),
+        func.count(KKProfile.Respondent_No)
+    ).join(KKDemographics).group_by('support_level').all()
     
-    dashboard_data['supportNeedsData']['datasets'][0]['data'] = list(support_needs.values())
+    support_data = [0, 0, 0]  # [High, Medium, Low]
+    for level, count in support_needs:
+        if level == 'High':
+            support_data[0] = count
+        elif level == 'Medium':
+            support_data[1] = count
+        else:
+            support_data[2] = count
     
+    dashboard_data['supportNeedsData']['datasets'][0]['data'] = support_data
+
     return render_template('dashboard.html',
                          total_youth=total_youth,
                          total_barangays=total_barangays,
