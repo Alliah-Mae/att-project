@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Youth Governance Analytics Dashboard</h1>
+    
+    <!-- Summary Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Registered Youth</h5>
+                    <h2 class="card-text">{{ total_youth }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Programs</h5>
+                    <h2 class="card-text">{{ active_programs }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Engagement</h5>
+                    <h2 class="card-text">{{ avg_engagement }}%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Barangays</h5>
+                    <h2 class="card-text">{{ total_barangays }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Registered Youth by Barangay</h5>
+                    <canvas id="barangayChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Age Group Distribution</h5>
+                    <canvas id="ageGroupChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gender Distribution</h5>
+                    <canvas id="genderChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Educational Attainment</h5>
+                    <canvas id="educationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Program Attendance Trends</h5>
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Youth Employment Status</h5>
+                    <canvas id="employmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 4 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Barangay-wise Youth Engagement</h5>
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Support Needs Distribution</h5>
+                    <canvas id="supportNeedsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Data from Flask backend
+    const dashboardData = {{ dashboard_data|tojson|safe }};
+
+    // Initialize charts
+    function initializeCharts() {
+        // Barangay Chart
+        new Chart(document.getElementById('barangayChart'), {
+            type: 'bar',
+            data: dashboardData.barangayData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Age Group Chart
+        new Chart(document.getElementById('ageGroupChart'), {
+            type: 'pie',
+            data: dashboardData.ageGroupData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        // Gender Chart
+        new Chart(document.getElementById('genderChart'), {
+            type: 'doughnut',
+            data: dashboardData.genderData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        // Education Chart
+        new Chart(document.getElementById('educationChart'), {
+            type: 'bar',
+            data: dashboardData.educationData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Attendance Chart
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'line',
+            data: dashboardData.attendanceData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Employment Chart
+        new Chart(document.getElementById('employmentChart'), {
+            type: 'pie',
+            data: dashboardData.employmentData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        // Engagement Chart
+        new Chart(document.getElementById('engagementChart'), {
+            type: 'bar',
+            data: dashboardData.engagementData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Support Needs Chart
+        new Chart(document.getElementById('supportNeedsChart'), {
+            type: 'doughnut',
+            data: dashboardData.supportNeedsData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize all charts when the page loads
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+</script>
+{% endblock %} 
