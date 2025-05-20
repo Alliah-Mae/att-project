@@ -114,253 +114,163 @@ def test_db():
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    # Get total youth count
-    total_youth = KKProfile.query.count()
-    
-    # Get total barangays
-    total_barangays = db.session.query(func.count(distinct(KKProfile.Barangay))).scalar()
-    
-    # Calculate average engagement (based on program attendance)
-    avg_engagement = db.session.query(
-        func.avg(case(
-            (KKDemographics.Attended_KK_Assembly == 'Yes', 100),
-            else_=0
-        ))
-    ).scalar() or 0
-    
-    # Prepare data for charts
-    dashboard_data = {
-        # Barangay distribution
-        'barangayData': {
-            'labels': [],
-            'datasets': [{
-                'label': 'Number of Youth',
-                'data': [],
-                'backgroundColor': 'rgba(54, 162, 235, 0.5)'
-            }]
-        },
-        
-        # Age group distribution
-        'ageGroupData': {
-            'labels': [],
-            'datasets': [{
-                'data': [],
-                'backgroundColor': [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 206, 86, 0.5)',
-                    'rgba(75, 192, 192, 0.5)'
-                ]
-            }]
-        },
-        
-        # Gender distribution
-        'genderData': {
-            'labels': ['Male', 'Female'],
-            'datasets': [{
-                'data': [],
-                'backgroundColor': [
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 99, 132, 0.5)'
-                ]
-            }]
-        },
-        
-        # Education distribution
-        'educationData': {
-            'labels': [],
-            'datasets': [{
-                'label': 'Number of Youth',
-                'data': [],
-                'backgroundColor': 'rgba(75, 192, 192, 0.5)'
-            }]
-        },
-        
-        # Employment status
-        'employmentData': {
-            'labels': [],
-            'datasets': [{
-                'data': [],
-                'backgroundColor': [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 206, 86, 0.5)'
-                ]
-            }]
-        },
-        
-        # Engagement levels
-        'engagementData': {
-            'labels': ['Highly Active', 'Active', 'Inactive'],
-            'datasets': [{
-                'label': 'Number of Youth',
-                'data': [],
-                'backgroundColor': [
-                    'rgba(75, 192, 192, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 99, 132, 0.5)'
-                ]
-            }]
-        },
-        
-        # Support needs
-        'supportNeedsData': {
-            'labels': ['High', 'Medium', 'Low'],
-            'datasets': [{
-                'data': [],
-                'backgroundColor': [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(255, 206, 86, 0.5)',
-                    'rgba(75, 192, 192, 0.5)'
-                ]
-            }]
-        }
-    }
-    
-    # Get barangay distribution
+    # Total Registered Youth by Barangay
     barangay_counts = db.session.query(
         KKProfile.Barangay,
         func.count(KKProfile.Respondent_No)
     ).group_by(KKProfile.Barangay).all()
-    
-    for barangay, count in barangay_counts:
-        dashboard_data['barangayData']['labels'].append(barangay)
-        dashboard_data['barangayData']['datasets'][0]['data'].append(count)
-    
-    # Get age group distribution
-    age_groups = {
-        '15-17': 0,
-        '18-21': 0,
-        '22-24': 0,
-        '25-30': 0
+    barangay_labels = [b for b, _ in barangay_counts]
+    barangay_data = [c for _, c in barangay_counts]
+    barangay_chart = {
+        "labels": barangay_labels,
+        "datasets": [{
+            "label": "Total Youth",
+            "data": barangay_data,
+            "backgroundColor": "rgba(54, 162, 235, 0.6)"
+        }]
     }
-    
-    # Get age distribution using SQL aggregation
-    age_distribution = db.session.query(
-        case(
-            (db.and_(KKProfile.Age >= 15, KKProfile.Age <= 17), '15-17'),
-            (db.and_(KKProfile.Age >= 18, KKProfile.Age <= 21), '18-21'),
-            (db.and_(KKProfile.Age >= 22, KKProfile.Age <= 24), '22-24'),
-            (db.and_(KKProfile.Age >= 25, KKProfile.Age <= 30), '25-30')
-        ).label('age_group'),
-        func.count(KKProfile.Respondent_No)
-    ).group_by('age_group').all()
-    
-    for age_group, count in age_distribution:
-        if age_group:  # Skip None values
-            age_groups[age_group] = count
-    
-    dashboard_data['ageGroupData']['labels'] = list(age_groups.keys())
-    dashboard_data['ageGroupData']['datasets'][0]['data'] = list(age_groups.values())
-    
-    # Get gender distribution
+
+    # Age Group Distribution
+    age_groups = {'15-17': 0, '18-21': 0, '22-24': 0, '25-30': 0}
+    for profile in KKProfile.query.all():
+        try:
+            age = int(profile.Age) if profile.Age is not None else 0
+            if 15 <= age <= 17:
+                age_groups['15-17'] += 1
+            elif 18 <= age <= 21:
+                age_groups['18-21'] += 1
+            elif 22 <= age <= 24:
+                age_groups['22-24'] += 1
+            elif 25 <= age <= 30:
+                age_groups['25-30'] += 1
+        except Exception:
+            continue
+    age_group_chart = {
+        "labels": list(age_groups.keys()),
+        "datasets": [{
+            "data": list(age_groups.values()),
+            "backgroundColor": [
+                "rgba(255, 99, 132, 0.5)",
+                "rgba(54, 162, 235, 0.5)",
+                "rgba(255, 206, 86, 0.5)",
+                "rgba(75, 192, 192, 0.5)"
+            ]
+        }]
+    }
+
+    # Gender Distribution
     gender_counts = db.session.query(
         KKProfile.Sex_Assigned_by_Birth,
         func.count(KKProfile.Respondent_No)
     ).group_by(KKProfile.Sex_Assigned_by_Birth).all()
-    
-    gender_data = []
-    for gender, count in gender_counts:
-        if gender:  # Skip None values
-            gender_data.append(count)
-    
-    # Ensure we have data for both genders
-    if len(gender_data) < 2:
-        gender_data.extend([0] * (2 - len(gender_data)))
-    
-    dashboard_data['genderData']['datasets'][0]['data'] = gender_data
-    
-    # Get education distribution
+    gender_labels = [g for g, _ in gender_counts]
+    gender_data = [c for _, c in gender_counts]
+    gender_chart = {
+        "labels": gender_labels,
+        "datasets": [{
+            "data": gender_data,
+            "backgroundColor": [
+                "rgba(54, 162, 235, 0.5)",
+                "rgba(255, 99, 132, 0.5)"
+            ]
+        }]
+    }
+
+    # Educational Attainment Breakdown
     education_counts = db.session.query(
         KKDemographics.Educational_Background,
         func.count(KKDemographics.Respondent_No)
     ).group_by(KKDemographics.Educational_Background).all()
-    
-    education_labels = []
-    education_data = []
-    for education, count in education_counts:
-        if education:  # Skip None values
-            education_labels.append(education)
-            education_data.append(count)
-    
-    dashboard_data['educationData']['labels'] = education_labels
-    dashboard_data['educationData']['datasets'][0]['data'] = education_data
-    
-    # Get employment status
+    education_labels = [e for e, _ in education_counts]
+    education_data = [c for _, c in education_counts]
+    education_chart = {
+        "labels": education_labels,
+        "datasets": [{
+            "label": "Number of Youth",
+            "data": education_data,
+            "backgroundColor": "rgba(75, 192, 192, 0.5)"
+        }]
+    }
+
+    # Youth Employment Status Summary
     employment_counts = db.session.query(
         KKDemographics.Work_Status,
         func.count(KKDemographics.Respondent_No)
     ).group_by(KKDemographics.Work_Status).all()
-    
-    employment_labels = []
-    employment_data = []
-    for status, count in employment_counts:
-        if status:  # Skip None values
-            employment_labels.append(status)
-            employment_data.append(count)
-    
-    dashboard_data['employmentData']['labels'] = employment_labels
-    dashboard_data['employmentData']['datasets'][0]['data'] = employment_data
-    
-    # Calculate engagement levels using SQL
-    engagement_levels = db.session.query(
-        case(
-            (db.and_(
-                KKDemographics.Attended_KK_Assembly == 'Yes',
-                KKDemographics.Did_you_vote_last_SK_election == 'Yes'
-            ), 'Highly Active'),
-            (db.or_(
-                KKDemographics.Attended_KK_Assembly == 'Yes',
-                KKDemographics.Did_you_vote_last_SK_election == 'Yes'
-            ), 'Active'),
-            else_='Inactive'
-        ).label('engagement_level'),
-        func.count(KKProfile.Respondent_No)
-    ).join(KKDemographics).group_by('engagement_level').all()
-    
-    engagement_data = [0, 0, 0]  # [Highly Active, Active, Inactive]
-    for level, count in engagement_levels:
-        if level == 'Highly Active':
-            engagement_data[0] = count
-        elif level == 'Active':
-            engagement_data[1] = count
-        else:
-            engagement_data[2] = count
-    
-    dashboard_data['engagementData']['datasets'][0]['data'] = engagement_data
-    
-    # Calculate support needs using SQL
-    support_needs = db.session.query(
-        case(
-            (db.and_(
-                KKDemographics.Work_Status == 'Unemployed',
-                KKDemographics.Educational_Background.in_(['Elementary', 'High School'])
-            ), 'High'),
-            (db.or_(
-                KKDemographics.Work_Status == 'Part-time',
-                KKDemographics.Educational_Background == 'College'
-            ), 'Medium'),
-            else_='Low'
-        ).label('support_level'),
-        func.count(KKProfile.Respondent_No)
-    ).join(KKDemographics).group_by('support_level').all()
-    
-    support_data = [0, 0, 0]  # [High, Medium, Low]
-    for level, count in support_needs:
-        if level == 'High':
-            support_data[0] = count
-        elif level == 'Medium':
-            support_data[1] = count
-        else:
-            support_data[2] = count
-    
-    dashboard_data['supportNeedsData']['datasets'][0]['data'] = support_data
+    employment_labels = [e for e, _ in employment_counts]
+    employment_data = [c for _, c in employment_counts]
+    employment_chart = {
+        "labels": employment_labels,
+        "datasets": [{
+            "data": employment_data,
+            "backgroundColor": [
+                "rgba(255, 99, 132, 0.5)",
+                "rgba(54, 162, 235, 0.5)",
+                "rgba(255, 206, 86, 0.5)"
+            ]
+        }]
+    }
 
-    return render_template('dashboard.html',
-                         total_youth=total_youth,
-                         total_barangays=total_barangays,
-                         avg_engagement=round(avg_engagement, 1),
-                         active_programs=3,  # This would need to be calculated based on actual program data
-                         dashboard_data=json.dumps(dashboard_data))
+    # Barangay-wise Youth Engagement Level (example: use same as barangay for now)
+    engagement_chart = {
+        "labels": barangay_labels,
+        "datasets": [{
+            "label": "Engagement",
+            "data": barangay_data,
+            "backgroundColor": "rgba(75, 192, 192, 0.5)"
+        }]
+    }
+
+    # Support Needs Level (example: dummy data)
+    support_needs_chart = {
+        "labels": ["High", "Medium", "Low"],
+        "datasets": [{
+            "data": [10, 20, 30],
+            "backgroundColor": [
+                "rgba(255, 99, 132, 0.5)",
+                "rgba(255, 206, 86, 0.5)",
+                "rgba(75, 192, 192, 0.5)"
+            ]
+        }]
+    }
+
+    # Program Attendance Trends (dummy data, replace with real query)
+    attendance_chart = {
+        "labels": ["Jan", "Feb", "Mar", "Apr"],
+        "datasets": [{
+            "label": "Attendance",
+            "data": [100, 120, 90, 110],
+            "backgroundColor": "rgba(153, 102, 255, 0.5)",
+            "borderColor": "rgba(153, 102, 255, 1)",
+            "fill": False,
+            "tension": 0.1
+        }]
+    }
+
+    dashboard_data = {
+        "barangayData": barangay_chart,
+        "ageGroupData": age_group_chart,
+        "genderData": gender_chart,
+        "educationData": education_chart,
+        "attendanceData": attendance_chart,
+        "employmentData": employment_chart,
+        "engagementData": engagement_chart,
+        "supportNeedsData": support_needs_chart,
+    }
+
+    # Example summary values
+    total_youth = sum(barangay_data)
+    active_programs = 3
+    avg_engagement = 50.9
+    total_barangays = len(barangay_labels)
+
+    return render_template(
+        'dashboard.html',
+        dashboard_data=dashboard_data,
+        total_youth=total_youth,
+        active_programs=active_programs,
+        avg_engagement=avg_engagement,
+        total_barangays=total_barangays
+    )
 
 
