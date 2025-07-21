@@ -206,7 +206,7 @@ def dashboard():
     ).group_by(KKDemographics.Work_Status).all()
     employment_labels = [e for e, _ in employment_counts]
     employment_data = [c for _, c in employment_counts]
-    employment_chart = {
+    employment_chart = { 
         "labels": employment_labels,
         "datasets": [{
             "data": employment_data,
@@ -280,10 +280,255 @@ def dashboard():
         total_barangays=total_barangays
     )
 
+def get_intelligent_recommendation(education, work_status, sex, age_group, engagement_level, avg_age):
+    """
+    Generate intelligent event/program recommendations based on demographics aligned with 17 SDGs
+    """
+    recommendations = []
+    
+    # SDG 1: No Poverty - Employment and Economic Empowerment
+    if work_status == 'Unemployed':
+        recommendations.extend([
+            'SDG 1: Poverty Alleviation Workshop',
+            'SDG 1: Financial Literacy Training',
+            'SDG 1: Micro-entrepreneurship Program',
+            'SDG 1: Job Skills Development',
+            'SDG 1: Economic Empowerment Initiative'
+        ])
+    
+    # SDG 2: Zero Hunger - Food Security and Nutrition
+    if education in ['Elementary graduate', 'Elementary undergraduate'] or avg_age < 20:
+        recommendations.extend([
+            'SDG 2: Nutrition Education Program',
+            'SDG 2: Community Garden Initiative',
+            'SDG 2: Food Security Workshop',
+            'SDG 2: Sustainable Agriculture Training',
+            'SDG 2: Healthy Eating Campaign'
+        ])
+    
+    # SDG 3: Good Health and Well-being - Health Programs
+    if sex == 'Female' or age_group == 'Teen':
+        recommendations.extend([
+            'SDG 3: Mental Health Awareness',
+            'SDG 3: Reproductive Health Education',
+            'SDG 3: Physical Wellness Program',
+            'SDG 3: Substance Abuse Prevention',
+            'SDG 3: Healthcare Access Workshop'
+        ])
+    
+    # SDG 4: Quality Education - Educational Programs
+    if education in ['High school graduate', 'High school undergraduate']:
+        recommendations.extend([
+            'SDG 4: Digital Literacy Training',
+            'SDG 4: STEM Education Program',
+            'SDG 4: Life Skills Development',
+            'SDG 4: Academic Excellence Support',
+            'SDG 4: Vocational Skills Training'
+        ])
+    elif education in ['Elementary graduate', 'Elementary undergraduate']:
+        recommendations.extend([
+            'SDG 4: Basic Literacy Program',
+            'SDG 4: Numeracy Skills Training',
+            'SDG 4: Computer Basics Course',
+            'SDG 4: Language Development',
+            'SDG 4: Educational Support Program'
+        ])
+    
+    # SDG 5: Gender Equality - Gender Empowerment
+    if sex == 'Female':
+        recommendations.extend([
+            'SDG 5: Women Leadership Program',
+            'SDG 5: Gender Equality Workshop',
+            'SDG 5: Women in STEM Initiative',
+            'SDG 5: Economic Empowerment for Women',
+            'SDG 5: Women\'s Rights Advocacy'
+        ])
+    elif sex == 'Male':
+        recommendations.extend([
+            'SDG 5: Men for Gender Equality',
+            'SDG 5: Positive Masculinity Workshop',
+            'SDG 5: Gender Sensitivity Training',
+            'SDG 5: Allyship Development Program',
+            'SDG 5: Gender Equality Advocacy'
+        ])
+    
+    # SDG 6: Clean Water and Sanitation - Environmental Health
+    if engagement_level < 0.5:  # Low engagement - community building
+        recommendations.extend([
+            'SDG 6: Water Conservation Workshop',
+            'SDG 6: Sanitation Awareness Program',
+            'SDG 6: Environmental Health Training',
+            'SDG 6: Community Clean-up Initiative',
+            'SDG 6: Water Safety Education'
+        ])
+    
+    # SDG 7: Affordable and Clean Energy - Energy Education
+    if education in ['College graduate', 'College undergraduate']:
+        recommendations.extend([
+            'SDG 7: Renewable Energy Workshop',
+            'SDG 7: Energy Conservation Training',
+            'SDG 7: Green Technology Program',
+            'SDG 7: Sustainable Energy Initiative',
+            'SDG 7: Energy Efficiency Workshop'
+        ])
+    
+    # SDG 8: Decent Work and Economic Growth - Employment
+    if work_status == 'Unemployed' or age_group == 'Young Adult':
+        recommendations.extend([
+            'SDG 8: Career Development Program',
+            'SDG 8: Entrepreneurship Training',
+            'SDG 8: Professional Skills Workshop',
+            'SDG 8: Job Market Preparation',
+            'SDG 8: Economic Growth Initiative'
+        ])
+    
+    # SDG 9: Industry, Innovation and Infrastructure - Innovation
+    if education in ['College graduate', 'College undergraduate'] or age_group == 'Young Adult':
+        recommendations.extend([
+            'SDG 9: Innovation Workshop',
+            'SDG 9: Technology Skills Training',
+            'SDG 9: Digital Infrastructure Program',
+            'SDG 9: Industry 4.0 Awareness',
+            'SDG 9: Innovation Hub Initiative'
+        ])
+    
+    # SDG 10: Reduced Inequalities - Social Inclusion
+    if engagement_level < 0.5 or education in ['Elementary graduate', 'Elementary undergraduate']:
+        recommendations.extend([
+            'SDG 10: Social Inclusion Program',
+            'SDG 10: Diversity Training Workshop',
+            'SDG 10: Equal Opportunity Initiative',
+            'SDG 10: Community Integration Program',
+            'SDG 10: Anti-Discrimination Workshop'
+        ])
+    
+    # SDG 11: Sustainable Cities and Communities - Urban Development
+    if age_group == 'Young Adult' or age_group == 'Adult':
+        recommendations.extend([
+            'SDG 11: Urban Planning Workshop',
+            'SDG 11: Community Development Program',
+            'SDG 11: Sustainable City Initiative',
+            'SDG 11: Public Space Improvement',
+            'SDG 11: Urban Innovation Program'
+        ])
+    
+    # SDG 12: Responsible Consumption and Production - Sustainability
+    if engagement_level > 1.5:  # High engagement - leadership
+        recommendations.extend([
+            'SDG 12: Sustainable Living Workshop',
+            'SDG 12: Circular Economy Training',
+            'SDG 12: Waste Reduction Program',
+            'SDG 12: Green Consumerism Initiative',
+            'SDG 12: Sustainable Production Workshop'
+        ])
+    
+    # SDG 13: Climate Action - Environmental Protection
+    if age_group == 'Teen' or engagement_level > 1.0:
+        recommendations.extend([
+            'SDG 13: Climate Change Awareness',
+            'SDG 13: Environmental Protection Program',
+            'SDG 13: Carbon Footprint Workshop',
+            'SDG 13: Climate Action Initiative',
+            'SDG 13: Green Advocacy Training'
+        ])
+    
+    # SDG 14: Life Below Water - Marine Conservation
+    if engagement_level > 0.5:  # Moderate to high engagement
+        recommendations.extend([
+            'SDG 14: Marine Conservation Workshop',
+            'SDG 14: Ocean Protection Program',
+            'SDG 14: Coastal Clean-up Initiative',
+            'SDG 14: Marine Life Awareness',
+            'SDG 14: Ocean Sustainability Training'
+        ])
+    
+    # SDG 15: Life on Land - Terrestrial Conservation
+    if age_group == 'Teen' or age_group == 'Young Adult':
+        recommendations.extend([
+            'SDG 15: Biodiversity Conservation',
+            'SDG 15: Forest Protection Program',
+            'SDG 15: Wildlife Awareness Workshop',
+            'SDG 15: Land Restoration Initiative',
+            'SDG 15: Ecosystem Protection Training'
+        ])
+    
+    # SDG 16: Peace, Justice and Strong Institutions - Governance
+    if engagement_level > 1.5 or education in ['College graduate', 'College undergraduate']:
+        recommendations.extend([
+            'SDG 16: Good Governance Workshop',
+            'SDG 16: Human Rights Education',
+            'SDG 16: Peace Building Program',
+            'SDG 16: Justice System Awareness',
+            'SDG 16: Civic Engagement Initiative'
+        ])
+    
+    # SDG 17: Partnerships for the Goals - Collaboration
+    if engagement_level > 1.0:  # Moderate to high engagement
+        recommendations.extend([
+            'SDG 17: Global Partnership Workshop',
+            'SDG 17: International Cooperation Program',
+            'SDG 17: Cross-cultural Exchange Initiative',
+            'SDG 17: Partnership Building Training',
+            'SDG 17: Collaborative Development Program'
+        ])
+    
+    # Remove duplicates and select top 3 most relevant
+    unique_recommendations = list(set(recommendations))
+    
+    # Prioritize based on combination of factors
+    priority_scores = {}
+    for rec in unique_recommendations:
+        score = 0
+        # Education match
+        if any(edu in rec.lower() for edu in [education.lower() if education != 'Unknown' else '']):
+            score += 3
+        # Employment match
+        if any(work in rec.lower() for work in [work_status.lower() if work_status != 'Unknown' else '']):
+            score += 3
+        # Age group match
+        if age_group.lower() in rec.lower():
+            score += 2
+        # Engagement level match
+        if engagement_level < 0.5 and 'outreach' in rec.lower():
+            score += 2
+        elif engagement_level > 1.5 and 'leadership' in rec.lower():
+            score += 2
+        priority_scores[rec] = score
+    
+    # Sort by priority score and add randomization for variety
+    sorted_recommendations = sorted(priority_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Add some randomization to selection while keeping top recommendations
+    import random
+    if len(sorted_recommendations) >= 6:
+        # Take top 2 high-scoring recommendations and randomly select 1 from next 4
+        top_recommendations = [rec for rec, score in sorted_recommendations[:2]]
+        remaining = [rec for rec, score in sorted_recommendations[2:6]]
+        if remaining:
+            top_recommendations.append(random.choice(remaining))
+    elif len(sorted_recommendations) >= 3:
+        # Take top 2 and randomly select 1 from remaining
+        top_recommendations = [rec for rec, score in sorted_recommendations[:2]]
+        remaining = [rec for rec, score in sorted_recommendations[2:]]
+        if remaining:
+            top_recommendations.append(random.choice(remaining))
+    else:
+        top_recommendations = [rec for rec, score in sorted_recommendations[:3]]
+    
+    # Format as a comprehensive recommendation
+    if len(top_recommendations) >= 3:
+        return f"{top_recommendations[0]} • {top_recommendations[1]} • {top_recommendations[2]}"
+    elif len(top_recommendations) == 2:
+        return f"{top_recommendations[0]} • {top_recommendations[1]}"
+    elif len(top_recommendations) == 1:
+        return top_recommendations[0]
+    else:
+        return "SDG 4: Quality Education Program • SDG 8: Decent Work Initiative • SDG 17: Partnership Building"
+
 @main.route('/clustering_model')
 @login_required
 def clustering_model():
-    # 1. Fetch data from the database
+    # 1. Fetch data from the database with additional SDG-relevant features
     profiles = db.session.query(
         KKProfile.Respondent_No,
         KKProfile.Age,
@@ -292,85 +537,156 @@ def clustering_model():
         KKDemographics.Attended_KK_Assembly,
         KKDemographics.Did_you_vote_last_SK_election,
         KKProfile.Sex_Assigned_by_Birth,
-        KKProfile.Barangay
+        KKProfile.Barangay,
+        KKProfile.Region,
+        KKProfile.Province,
+        KKProfile.Municipality
     ).join(KKDemographics, KKProfile.Respondent_No == KKDemographics.Respondent_No).all()
 
-    # 2. Preprocess data for clustering
+    # 2. Preprocess data for clustering with SDG-focused features
     data = []
     for p in profiles:
         try:
             age = int(p.Age) if p.Age is not None and str(p.Age).isdigit() else 0
         except Exception:
             age = 0
+        
+        # Enhanced demographic features for SDG alignment
         education = p.Educational_Background or 'Unknown'
         work_status = p.Work_Status or 'Unknown'
         attended = 1 if p.Attended_KK_Assembly == 'Yes' else 0
         voted = 1 if p.Did_you_vote_last_SK_election == 'Yes' else 0
         sex = p.Sex_Assigned_by_Birth or 'Unknown'
         barangay = p.Barangay or 'Unknown'
-        data.append([age, education, work_status, attended, voted, sex, barangay])
+        region = p.Region or 'Unknown'
+        
+        # Calculate SDG-relevant indicators
+        # SDG 1 (Poverty): Employment status
+        poverty_indicator = 0 if work_status == 'Unemployed' else 1
+        
+        # SDG 4 (Education): Education level
+        education_level = 0
+        if education in ['College graduate', 'College undergraduate']:
+            education_level = 3
+        elif education in ['High school graduate', 'High school undergraduate']:
+            education_level = 2
+        elif education in ['Elementary graduate', 'Elementary undergraduate']:
+            education_level = 1
+        
+        # SDG 5 (Gender): Gender empowerment
+        gender_empowerment = 1 if sex == 'Female' else 0
+        
+        # SDG 8 (Work): Economic participation
+        economic_participation = attended + voted + poverty_indicator
+        
+        # SDG 16 (Governance): Civic engagement
+        civic_engagement = attended + voted
+        
+        data.append([
+            age, education, work_status, attended, voted, sex, barangay, region,
+            poverty_indicator, education_level, gender_empowerment, 
+            economic_participation, civic_engagement
+        ])
 
     # Encode categorical features
     education_le = LabelEncoder()
     work_le = LabelEncoder()
+    sex_le = LabelEncoder()
+    region_le = LabelEncoder()
+    
     educations = [row[1] for row in data]
     works = [row[2] for row in data]
+    sexes = [row[5] for row in data]
+    regions = [row[7] for row in data]
+    
     education_encoded = education_le.fit_transform(educations)
     work_encoded = work_le.fit_transform(works)
+    sex_encoded = sex_le.fit_transform(sexes)
+    region_encoded = region_le.fit_transform(regions)
 
+    # Enhanced feature matrix for SDG-focused clustering
     X = np.array([
-        [row[0], education_encoded[i], work_encoded[i], row[3], row[4]]
+        [row[0], education_encoded[i], work_encoded[i], row[3], row[4], 
+         sex_encoded[i], region_encoded[i], row[8], row[9], row[10], 
+         row[11], row[12]]
         for i, row in enumerate(data)
     ])
 
-   # 3. Run KMeans clustering for event recommendation
-    kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
+   # 3. Run KMeans clustering for event recommendation with randomization
+    import random
+    import time
+    
+    # Generate random seeds for different clustering results each time
+    random_seed1 = int(time.time() * 1000) % 10000  # Use current time for randomness
+    random_seed2 = random.randint(1, 1000)  # Additional randomness
+    
+    kmeans = KMeans(n_clusters=3, random_state=random_seed1, n_init=10).fit(X)
     labels = kmeans.labels_
     silhouette_event = silhouette_score(X, labels) if len(set(labels)) > 1 else None
+    
+    # Additional clustering metrics for better analysis
+    from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
+    calinski_event = calinski_harabasz_score(X, labels) if len(set(labels)) > 1 else None
+    davies_event = davies_bouldin_score(X, labels) if len(set(labels)) > 1 else None
 
-    # --- Youth Needs Support ---
-    participation = [row[3] + row[4] for row in data]  # attended + voted
-    education_encoded2 = education_le.transform([row[1] for row in data])
-    work_encoded2 = work_le.transform([row[2] for row in data])
-    X2 = np.array([
-        [participation[i], education_encoded2[i], work_encoded2[i]]
-        for i in range(len(data))
+    # --- Youth Needs Support with SDG Focus ---
+    # SDG-focused features: poverty, education, gender, economic participation
+    sdg_features = np.array([
+        [row[8], row[9], row[10], row[11]]  # poverty, education, gender, economic
+        for row in data
     ])
-    kmeans2 = KMeans(n_clusters=3, random_state=1).fit(X2)
+    
+    kmeans2 = KMeans(n_clusters=3, random_state=random_seed2, n_init=10).fit(sdg_features)
     labels2 = kmeans2.labels_
-    support_labels = ['High Need Group', 'Medium Need Group', 'Low Need Group']
+    
+    # SDG-focused cluster labels
+    sdg_support_labels = ['SDG Priority Group', 'SDG Development Group', 'SDG Empowerment Group']
     needs_support_groups = []
+    
     for i in range(3):
         indices = np.where(labels2 == i)[0]
         cluster_profiles = [profiles[j] for j in indices]
         count = len(cluster_profiles)
-        avg_participation = np.mean([participation[j] for j in indices]) if count else 0
+        
+        # Calculate SDG-relevant metrics
+        avg_poverty = np.mean([data[j][8] for j in indices])  # SDG 1
+        avg_education = np.mean([data[j][9] for j in indices])  # SDG 4
+        avg_gender_emp = np.mean([data[j][10] for j in indices])  # SDG 5
+        avg_economic = np.mean([data[j][11] for j in indices])  # SDG 8
+        
+        # Determine primary SDG focus for this cluster
+        sdg_focus = []
+        if avg_poverty < 0.5:
+            sdg_focus.append("SDG 1: Poverty Alleviation")
+        if avg_education < 2:
+            sdg_focus.append("SDG 4: Quality Education")
+        if avg_gender_emp < 0.5:
+            sdg_focus.append("SDG 5: Gender Equality")
+        if avg_economic < 1.5:
+            sdg_focus.append("SDG 8: Decent Work")
+        
+        primary_sdg = sdg_focus[0] if sdg_focus else "SDG 17: Partnerships"
+        
         education_counter = Counter([p.Educational_Background for p in cluster_profiles if p.Educational_Background])
         common_education = education_counter.most_common(1)[0][0] if education_counter else '-'
         work_counter = Counter([p.Work_Status for p in cluster_profiles if p.Work_Status])
         common_employment = work_counter.most_common(1)[0][0] if work_counter else '-'
-        # Add a simple support need level based on participation (lower participation = higher need)
-        if avg_participation < 1.5:
-            support_level = 'High Need'
-        elif avg_participation < 2.5:
-            support_level = 'Medium Need'
-        else:
-            support_level = 'Low Need'
+        
         needs_support_groups.append({
-            "label": support_labels[i],
+            "label": f"{sdg_support_labels[i]} ({primary_sdg})",
             "count": int(count),
-            "avg_participation": float(round(avg_participation, 2)),
+            "avg_participation": float(round(avg_economic, 2)),
             "common_education": common_education,
-            "common_employment": common_employment
+            "common_employment": common_employment,
+            "sdg_focus": primary_sdg
         })
-    bar_labels = [group["label"] for group in needs_support_groups]
-    bar_data = [group["count"] for group in needs_support_groups]
+    
     needs_support_chart_data = {
         "datasets": [
             {
-                "label": support_labels[i],
+                "label": sdg_support_labels[i],
                 "data": [
-                    {"x": float(X2[j][0]), "y": float(X2[j][1])}
+                    {"x": float(sdg_features[j][0]), "y": float(sdg_features[j][1])}
                     for j in np.where(labels2 == i)[0]
                 ],
                 "backgroundColor": color
@@ -382,7 +698,11 @@ def clustering_model():
             ])
         ]
     }
-    silhouette_support = silhouette_score(X2, labels2) if len(set(labels2)) > 1 else None
+    silhouette_support = silhouette_score(sdg_features, labels2) if len(set(labels2)) > 1 else None
+    
+    # Additional clustering metrics for needs support
+    calinski_support = calinski_harabasz_score(sdg_features, labels2) if len(set(labels2)) > 1 else None
+    davies_support = davies_bouldin_score(sdg_features, labels2) if len(set(labels2)) > 1 else None
 
     # 4. Prepare cluster summaries and chart data for the template
     event_clusters = []
@@ -390,35 +710,89 @@ def clustering_model():
         indices = np.where(labels == i)[0]
         cluster_profiles = [profiles[j] for j in indices]
         count = len(cluster_profiles)
-        # Calculate average age
+        
+        # Calculate comprehensive SDG-relevant demographics
         ages = [int(p.Age) for p in cluster_profiles if p.Age is not None and str(p.Age).isdigit()]
         avg_age = np.mean(ages) if ages else 0
-        # Top demographic (most common sex + age group)
+        
+        # SDG-focused demographic analysis
+        poverty_rate = np.mean([data[j][8] for j in indices])
+        education_level = np.mean([data[j][9] for j in indices])
+        gender_balance = np.mean([data[j][10] for j in indices])
+        economic_participation = np.mean([data[j][11] for j in indices])
+        civic_engagement = np.mean([data[j][12] for j in indices])
+        
+        # Determine primary SDG focus for recommendations
+        sdg_priorities = []
+        if poverty_rate < 0.5:
+            sdg_priorities.append("SDG 1")
+        if education_level < 2:
+            sdg_priorities.append("SDG 4")
+        if gender_balance < 0.5:
+            sdg_priorities.append("SDG 5")
+        if economic_participation < 1.5:
+            sdg_priorities.append("SDG 8")
+        if civic_engagement < 1:
+            sdg_priorities.append("SDG 16")
+        
+        # Demographic counters
         sex_counter = Counter([p.Sex_Assigned_by_Birth for p in cluster_profiles if p.Sex_Assigned_by_Birth])
         top_sex = sex_counter.most_common(1)[0][0] if sex_counter else '-'
-        age_groups = [(int(p.Age) // 5 * 5) if p.Age and str(p.Age).isdigit() else None for p in cluster_profiles]
-        age_group_counter = Counter([ag for ag in age_groups if ag is not None])
-        top_age_group = age_group_counter.most_common(1)[0][0] if age_group_counter else '-'
-        top_demo = f"{top_age_group}-{top_age_group+4}, {top_sex}" if top_age_group != '-' else '-'
-        # Top engagement (most common attended/voted)
-        engagement_counter = Counter([(p.Attended_KK_Assembly, p.Did_you_vote_last_SK_election) for p in cluster_profiles])
-        top_engagement = engagement_counter.most_common(1)[0][0] if engagement_counter else ('-', '-')
-        top_engagement_str = f"Attended: {top_engagement[0]}, Voted: {top_engagement[1]}"
-        # Recommended event (dummy logic: based on top education)
+        
         education_counter = Counter([p.Educational_Background for p in cluster_profiles if p.Educational_Background])
-        top_education = education_counter.most_common(1)[0][0] if education_counter else '-'
-        if top_education == 'College':
-            recommended_event = 'Job Fair'
-        elif top_education == 'High School':
-            recommended_event = 'Leadership Camp'
+        work_counter = Counter([p.Work_Status for p in cluster_profiles if p.Work_Status])
+        
+        top_education = education_counter.most_common(1)[0][0] if education_counter else 'Unknown'
+        top_work = work_counter.most_common(1)[0][0] if work_counter else 'Unknown'
+        
+        # Calculate engagement level
+        avg_attended = np.mean([1 if p.Attended_KK_Assembly == 'Yes' else 0 for p in cluster_profiles])
+        avg_voted = np.mean([1 if p.Did_you_vote_last_SK_election == 'Yes' else 0 for p in cluster_profiles])
+        engagement_level = avg_attended + avg_voted
+        
+        # Determine age group
+        if avg_age < 18:
+            age_group = 'Teen'
+        elif avg_age < 25:
+            age_group = 'Young Adult'
         else:
-            recommended_event = 'Sports Fest'
+            age_group = 'Adult'
+        
+        # Intelligent recommendation logic with SDG focus
+        recommended_event = get_intelligent_recommendation(
+            top_education, top_work, top_sex, age_group, engagement_level, avg_age
+        )
+        
+        # Create detailed demographic summary with SDG indicators
+        demo_summary = f"Avg Age: {avg_age:.1f} • {top_sex}"
+        if education_counter:
+            top_edu = list(education_counter.keys())[0]
+            demo_summary += f" • {top_edu}"
+        if work_counter:
+            top_work = list(work_counter.keys())[0]
+            demo_summary += f" • {top_work}"
+        
+        # Add SDG focus to summary
+        if sdg_priorities:
+            demo_summary += f" • Focus: {', '.join(sdg_priorities[:2])}"
+        
+        # Dynamic cluster labels based on SDG characteristics
+        if engagement_level > 1.5 and education_level > 2:
+            label = random.choice(["SDG Leadership Circle", "SDG Innovation Group", "SDG Empowerment Network"])
+        elif poverty_rate < 0.5 and education_level < 2:
+            label = random.choice(["SDG Development Cluster", "SDG Support Network", "SDG Growth Initiative"])
+        else:
+            label = random.choice(["SDG Community Group", "SDG Opportunity Circle", "SDG Partnership Network"])
+        
         event_clusters.append({
-            "label": f"Cluster {i+1}",
+            "label": label,
             "count": int(count),
-            "top_demo": top_demo,
-            "top_engagement": top_engagement_str,
-            "recommended_event": recommended_event
+            "top_demo": demo_summary,
+            "top_engagement": f"Economic: {economic_participation:.1f} • Civic: {civic_engagement:.1f}",
+            "recommended_event": recommended_event,
+            "avg_age": round(avg_age, 1),
+            "engagement_level": round(engagement_level, 2),
+            "sdg_focus": ', '.join(sdg_priorities[:3]) if sdg_priorities else "SDG 17"
         })
 
     event_cluster_chart_data = {
@@ -439,7 +813,11 @@ def clustering_model():
         needs_support_groups=needs_support_groups,
         needs_support_chart_data=needs_support_chart_data,
         silhouette_event=silhouette_event,
-        silhouette_support=silhouette_support
+        silhouette_support=silhouette_support,
+        calinski_event=calinski_event,
+        davies_event=davies_event,
+        calinski_support=calinski_support,
+        davies_support=davies_support
     )
 
 
